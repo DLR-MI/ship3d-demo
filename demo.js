@@ -26,6 +26,7 @@ function populateShipDropdown() {
   // Add ships here:
   addShipOption("img_143"); 
   addShipOption("img_306");
+  addShipOption("img_546");
 
   // Example to add more ships:
   // addShipOption("img_000");
