@@ -43,7 +43,7 @@ function addShipOption(shipId) {
 function initMap(shipData, shipKey) {
   if (map) map.remove();
 
-  const fixedMapCenter = [8.57829, 53.53458];
+  const fixedMapCenter = [8.578295911994003, 53.5344073748174];//[8.57829, 53.53458];
 
   // Correct numeric parsing and explicit assignment
   const lat = parseFloat(shipData.geo[0]);
