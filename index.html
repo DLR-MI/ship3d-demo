@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Synthetic-to-Real Single-View 3D Ship Reconstruction">
+  <meta name="keywords" content="3D Reconstruction, Maritime Monitoring, Synthetic-to-Real, DLR, Gaussian Splatting">
+  <title>Synthetic-to-Real 3D Ship Reconstruction</title>
+
+  <!-- Bulma CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+  <style>
+    body { background: #fff; }
+    .hero.is-light { background-color: #f4f4f4; }
+    .media-demo video, .media-demo img { width: 100%; border-radius: 8px; }
+    #map { height: 300px; border-radius: 8px; margin-top: 10px; }
+    .select { margin-top: 1rem; }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+      }
+    }
+  </script>
+  <script src="https://unpkg.com/maplibre-gl@5.3.0/dist/maplibre-gl.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.3.0/dist/maplibre-gl.css" />
+</head>
+<body>
+  <section class="hero is-light">
+    <div class="hero-body has-text-centered">
+      <p class="title is-3">Synthetic-to-Real Single-View 3D Ship Reconstruction</p>
+      <p class="subtitle is-5">
+        <a href="https://scholar.google.com/citations?user=kF6e-FMAAAAJ&hl=en" target="_blank" style="color: #3273dc;">Borja Carrillo-Perez</a>, Felix Sattler, Angel Bueno Rodriguez, Maurice Stephan, Sarah Barnes<br>
+        <em>German Aerospace Center (DLR), Institute for the Protection of Maritime Infrastructures</em><br>
+        Presented at SPIE Optics + Photonics, San Diego, 2024
+      </p>
+      <div class="buttons is-centered">
+        <a class="button is-link is-light" href="#">Link to paper</a>
+      </div>
+    </div>
+  </section>
+
+ <section class="section">
+  <div class="container content has-text-centered">
+    <h2 class="title is-4">Abstract</h2>
+    <p>
+      Three-dimensional (3D) reconstruction of ships is crucial for maritime monitoring, enabling improved visualization, inspection, and decision-making in real-world maritime environments. However, most state-of-the-art methods rely on multi-view supervision, annotated 3D ground truth, or high computational cost, making them unsuitable for real-time applications at sea. 
+
+      In this work, we present an efficient pipeline for single-view 3D reconstruction of real ships using models trained entirely on synthetic data. At inference time, only a single real image is required. Our method leverages the Splatter Image network <a href="#ref1" id="cite1">[1]</a>, which represents objects as sparse sets of 3D Gaussians for rapid reconstruction. We fine-tune this network on synthetic ShapeNet boats <a href="#ref2" id="cite2">[2]</a> and further refine it with a diverse set of custom-rendered ships to bridge the domain gap between synthetic and real data.
+
+      The segmentation stage employs an enhanced ScatYOLOv8+CBAM model <a href="#ref3" id="cite3">[3]</a><a href="#ref4" id="cite4">[4]</a>, with custom preprocessing to ensure alignment with the reconstruction pipeline. Final postprocessing steps include real-world metric scaling, orientation alignment, and placement on a geospatial map using AIS data and homography-based localization. The map visualization is powered by MapLibre GL JS <a href="#ref5" id="cite5">[5]</a>.
+
+      Evaluation is performed on real images from the ShipSG dataset <a href="#ref6" id="cite6">[6]</a>, captured in Bremerhaven, Germany. These examples, taken from the official validation split, confirm that the model—despite being trained solely on synthetic data—generalizes well to operational maritime conditions. The full system enables interactive 3D inspection of segmented ships in their real-world locations, without requiring any real-world 3D supervision. This pipeline provides a scalable, plug-and-play solution for future maritime situational awareness systems.
+    </p>
+  </div>
+</section>
+
+
+  <section class="section">
+  <div class="container content has-text-centered">
+    <h2 class="title is-4">How to Use This Demo</h2>
+    <ul style="list-style: none;">
+      <li>• Select a ship from the dropdown below. All examples use real images from the <a href="#ref6">ShipSG dataset</a> (Bremerhaven, Germany).</li>
+      <li>• View the original input image, the result of segmentation using ScatYOLOv8+CBAM, and a video of the reconstruction process.</li>
+      <li>• Explore the resulting 3D reconstruction as a geolocated point cloud overlaid on a real-world map.</li>
+      <li>• On the map, <strong>zoom</strong> using the mouse scroll wheel. <strong>Rotate</strong> the 3D view by holding <kbd>Ctrl</kbd> and left-clicking.</li>
+    </ul>
+    <div class="select is-medium">
+      <select id="ship-select">
+        <option value="img_143">Ship 143</option>
+      </select>
+    </div>
+  </div>
+</section>
+
+
+  <section class="section media-demo">
+    <div class="container">
+      <div class="columns is-variable is-4">
+        <div class="column">
+          <h3 class="subtitle has-text-centered">Input Image</h3>
+          <img id="input-img" alt="Input ship image" />
+        </div>
+        <div class="column">
+          <h3 class="subtitle has-text-centered">Ship Segmentation</h3>
+          <img id="segmented-img" alt="Segmented ship image" />
+        </div>
+        <div class="column">
+          <h3 class="subtitle has-text-centered">3D Reconstruction</h3>
+          <video id="recon-video" controls autoplay loop muted></video>
+        </div>
+        <div class="column">
+          <h3 class="subtitle has-text-centered">3D Geospatial Map Visualization</h3>
+          <div id="map"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container content has-text-centered">
+      <h2 class="title is-4">BibTeX</h2>
+      <pre><code>@inproceedings{carrillo2024ship3d,
+  title={Synthetic-to-Real Domain Bridging for Single-View 3D Reconstruction of Ships for Maritime Monitoring},
+  author={Carrillo-Perez, Borja and Sattler, Felix and Rodriguez, Angel Bueno and Stephan, Maurice and Barnes, Sarah},
+  booktitle={SPIE Optics + Photonics},
+  year={2024},
+  organization={SPIE}
+}</code></pre>
+    </div>
+  </section>
+
+  <section class="section">
+  <div class="container is-max-desktop content">
+    <h2 class="title">References</h2>
+    <ol>
+      <li id="ref1">
+        Szymanowicz, S., Rupprecht, C., Vedaldi, A. <em>Splatter Image: Ultra-fast Single-View 3D Reconstruction.</em> CVPR, 2024.
+        <a href="#cite1">↑</a>
+      </li>
+      <li id="ref2">
+        Chang, A. X. et al. <em>ShapeNet: An Information-Rich 3D Model Repository.</em> arXiv:1512.03012.
+        <a href="#cite2">↑</a>
+      </li>
+      <li id="ref3">
+        Carrillo-Perez, B., Rodriguez, A. B., Barnes, S., and Stephan, M. <em>Improving YOLOv8 with Scattering Transform and Attention for Maritime Awareness.</em> ISPA, 2023.
+        <a href="#cite3">↑</a>
+      </li>
+      <li id="ref4">
+        Carrillo-Perez, B., Rodriguez, A. B., Barnes, S., and Stephan, M. <em>Enhanced Small Ship Segmentation with Optimized ScatYOLOv8+CBAM on Embedded Systems.</em> RCAR, 2024.
+        <a href="#cite4">↑</a>
+      </li>
+      <li id="ref5">
+        MapLibre Organization. <em>MapLibre GL JS: Interactive Vector Tile Maps in the Browser.</em> 2020. Accessed 2025-06-20.
+        <a href="#cite5">↑</a>
+      </li>
+      <li id="ref6">
+        Carrillo-Perez, B., Barnes, S., and Stephan, M. <em>Ship Segmentation and Georeferencing from Static Oblique View Images.</em> Sensors, 2022. (ShipSG dataset)
+        <a href="#cite6">↑</a>
+      </li>
+    </ol>
+  </div>
+</section>
+
+
+  <script type="module" src="demo.js"></script>
+</body>
+</html>
