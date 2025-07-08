@@ -24,7 +24,8 @@ function populateShipDropdown() {
   select.innerHTML = ""; // Clear existing options
   
   // Add ships here:
-  addShipOption("img_143"); // <-- Currently only img_143 is enabled
+  addShipOption("img_143"); 
+  addShipOption("img_306");
 
   // Example to add more ships:
   // addShipOption("img_000");
