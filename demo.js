@@ -49,12 +49,12 @@ function initMap(shipData, shipKey) {
   const lon = parseFloat(shipData.geo[1]);
   const ship_length = parseFloat(shipData.ship_length);
 
-  const fixedMapCenter = [lon, lat]; //The center is the model location instead of --> const fixedMapCenter = [8.578295911994003, 53.5344073748174];//[8.57829, 53.53458];
-
   if (isNaN(lat) || isNaN(lon) || isNaN(ship_length)) {
     console.error("Invalid data:", {lat, lon, ship_length});
     return;
   }
+  
+  const fixedMapCenter = [lon, lat]; //The center is the model location instead of --> const fixedMapCenter = [8.578295911994003, 53.5344073748174];//[8.57829, 53.53458];
 
   map = new maplibregl.Map({
     container: mapDiv,
