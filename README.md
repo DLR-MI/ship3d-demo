@@ -33,10 +33,10 @@ All input images, segmentation masks, 3D reconstructions, and metadata are preco
 ## Citation
 
 ```bibtex
-@inproceedings{carrillo2024ship3d,
+@inproceedings{carrillo2025ship3d,
   title={Synthetic-to-Real Domain Bridging for Single-View 3D Reconstruction of Ships for Maritime Monitoring},
   author={Carrillo-Perez, Borja and Sattler, Felix and Rodriguez, Angel Bueno and Stephan, Maurice and Barnes, Sarah},
   booktitle={SPIE Optics + Photonics},
-  year={2024},
+  year={2025},
   organization={SPIE}
 }
