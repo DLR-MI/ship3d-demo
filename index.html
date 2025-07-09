@@ -17,6 +17,11 @@
     .media-demo video, .media-demo img { width: 100%; border-radius: 8px; }
     #map { height: 300px; border-radius: 8px; margin-top: 10px; }
     .select { margin-top: 1rem; }
+    .footer {
+      background: #f5f5f5;
+      padding: 1.5rem 1rem;
+      font-size: 0.9rem;
+    }
   </style>
 
   <script type="importmap">
@@ -33,29 +38,26 @@
 <body>
   <section class="hero is-light">
     <div class="hero-body">
-      <div class="columns is-vcentered is-mobile">
-        <div class="column is-narrow">
-          <figure class="image is-96x96">
-            <img src="DLR_Logo.svg.png" alt="DLR Logo">
+      <div class="columns is-vcentered is-centered is-multiline">
+        <div class="column is-narrow has-text-centered">
+          <figure class="image is-96x96 is-inline-block">
+            <img src="DLR_Logo.svg.png" alt="DLR - German Aerospace Center Logo">
           </figure>
         </div>
-        <div class="column has-text-centered">
+        <div class="column is-8 has-text-centered">
           <p class="title is-3">Synthetic-to-Real Single-View 3D Ship Reconstruction</p>
+          <p class="subtitle is-5">
+            <a href="https://scholar.google.com/citations?user=kF6e-FMAAAAJ&hl=en" target="_blank" style="color: #3273dc;">Borja Carrillo-Perez</a>, 
+            <a href="https://scholar.google.com/citations?user=2KBrb7oAAAAJ&hl=en" target="_blank" style="color: #3273dc;">Felix Sattler</a>, 
+            Angel Bueno Rodriguez, Maurice Stephan, 
+            <a href="https://scholar.google.com/citations?user=Vxnql7wAAAAJ&hl=en" target="_blank" style="color: #3273dc;">Sarah Barnes</a><br>
+            <em>German Aerospace Center (DLR), Institute for the Protection of Maritime Infrastructures</em><br>
+            Presented at SPIE Optics + Photonics, San Diego, 2025
+          </p>
+          <div class="buttons is-centered">
+            <a class="button is-link is-light" href="#">Link to paper (in progress)</a>
+          </div>
         </div>
-      </div>
-
-      <p class="subtitle is-5">
-        <a href="https://scholar.google.com/citations?user=kF6e-FMAAAAJ&hl=en" target="_blank" style="color: #3273dc;">Borja Carrillo-Perez</a>, 
-        <a href="https://scholar.google.com/citations?user=2KBrb7oAAAAJ&hl=en" target="_blank" style="color: #3273dc;">Felix Sattler</a>, 
-        Angel Bueno Rodriguez, 
-        Maurice Stephan, 
-        <a href="https://scholar.google.com/citations?user=Vxnql7wAAAAJ&hl=en" target="_blank" style="color: #3273dc;">Sarah Barnes</a><br>
-
-        <em>German Aerospace Center (DLR), Institute for the Protection of Maritime Infrastructures</em><br>
-        Presented at SPIE Optics + Photonics, San Diego, 2025
-      </p>
-      <div class="buttons is-centered">
-        <a class="button is-link is-light" href="#">Link to paper</a>
       </div>
     </div>
   </section>
@@ -89,7 +91,7 @@
       <select id="ship-select">
         <option value="img_143">img_143</option>
         <option value="img_306">img_306</option>
-        <option value="img_306">img_546</option>
+        <option value="img_546">img_546</option>
       </select>
     </div>
   </div>
@@ -163,8 +165,16 @@
     </ol>
   </div>
 </section>
+<footer class="footer">
+  <div class="content has-text-centered">
+    <p>
+      &copy; 2025 German Aerospace Center (DLR). All rights reserved.
+    </p>
+  </div>
+</footer>
 
 
   <script type="module" src="demo.js"></script>
+  
 </body>
 </html>
