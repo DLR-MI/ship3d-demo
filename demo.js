@@ -7,9 +7,42 @@ const img = document.getElementById("input-img");
 const segmented = document.getElementById("segmented-img");
 const video = document.getElementById("recon-video");
 const mapDiv = document.getElementById("map");
+const measureLabel = document.getElementById("measure-label");
+const resetBtn = document.getElementById("reset-measure");
 
 let map; // Global map reference
 let annotations = {}; // Holds data from annotations.json
+
+// ---- Measuring Tool State ----
+let measurePoints = [];
+let measureLine = null;
+let sceneRef = null;
+let modelAsMercatorCoordinate = null; // We'll set this per-ship
+
+function showLabel(text) {
+    measureLabel.textContent = text;
+    measureLabel.style.display = 'block';
+}
+function hideLabel() {
+    measureLabel.style.display = 'none';
+}
+function resetMeasure() {
+    measurePoints = [];
+    if (measureLine && sceneRef) {
+        sceneRef.remove(measureLine);
+        measureLine.geometry.dispose();
+        measureLine.material.dispose();
+    }
+    measureLine = null;
+    hideLabel();
+    resetBtn.style.display = 'none';
+}
+resetBtn.addEventListener('click', resetMeasure);
+// Allow reset via keyboard "r"
+document.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'r') resetMeasure();
+});
+// -------------------------------
 
 // Load annotations.json once at startup
 async function loadAnnotations() {
@@ -22,9 +55,9 @@ async function loadAnnotations() {
 // Populate dropdown (currently only img_143, but extensible)
 function populateShipDropdown() {
   select.innerHTML = ""; // Clear existing options
-  
+
   // Add ships here:
-  addShipOption("img_143"); 
+  addShipOption("img_143");
   addShipOption("img_306");
   addShipOption("img_546");
 
@@ -53,8 +86,8 @@ function initMap(shipData, shipKey) {
     console.error("Invalid data:", {lat, lon, ship_length});
     return;
   }
-  
-  const fixedMapCenter = [lon, lat]; //The center is the model location instead of --> const fixedMapCenter = [8.578295911994003, 53.5344073748174];//[8.57829, 53.53458];
+
+  const fixedMapCenter = [lon, lat];
 
   map = new maplibregl.Map({
     container: mapDiv,
@@ -68,17 +101,17 @@ function initMap(shipData, shipKey) {
 
   map.setMaxPitch(90);
 
-  const modelAsMercatorCoordinate = maplibregl.MercatorCoordinate.fromLngLat([lon, lat], 0);
+  modelAsMercatorCoordinate = maplibregl.MercatorCoordinate.fromLngLat([lon, lat], 0);
 
   const modelTransform = {
-  translateX: modelAsMercatorCoordinate.x,
-  translateY: modelAsMercatorCoordinate.y,
-  translateZ: modelAsMercatorCoordinate.z,
-  rotateX: Math.PI / 2,
-  rotateY: Math.PI,
-  rotateZ: Math.PI,
-  scale: modelAsMercatorCoordinate.meterInMercatorCoordinateUnits()  // no multiplier!
-    };
+    translateX: modelAsMercatorCoordinate.x,
+    translateY: modelAsMercatorCoordinate.y,
+    translateZ: modelAsMercatorCoordinate.z,
+    rotateX: Math.PI / 2,
+    rotateY: Math.PI,
+    rotateZ: Math.PI,
+    scale: modelAsMercatorCoordinate.meterInMercatorCoordinateUnits()
+  };
 
   const customLayer = {
     id: '3d-model',
@@ -87,32 +120,30 @@ function initMap(shipData, shipKey) {
     onAdd: function (map, gl) {
       this.camera = new THREE.Camera();
       this.scene = new THREE.Scene();
+      sceneRef = this.scene; // For measuring tool
 
       const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
       this.scene.add(ambientLight);
 
       const loader = new PLYLoader();
-const plyPath = `media/${shipKey}.ply`;
+      const plyPath = `media/${shipKey}.ply`;
 
-console.log("Loading PLY:", plyPath);
+      loader.load(
+        plyPath,
+        geometry => {
+          geometry.computeVertexNormals();
+          const material = geometry.attributes.color
+            ? new THREE.PointsMaterial({ vertexColors: true, size: 3.5 })
+            : new THREE.PointsMaterial({ color: 0xff0000, size: 6 });
 
-loader.load(
-  plyPath,
-  geometry => {
-    console.log("PLY loaded successfully:", geometry);
-    geometry.computeVertexNormals();
-    const material = geometry.attributes.color
-      ? new THREE.PointsMaterial({ vertexColors: true, size: 3.5 })
-      : new THREE.PointsMaterial({ color: 0xff0000, size: 6 });
-
-    const mesh = new THREE.Points(geometry, material);
-    this.scene.add(mesh);
-  },
-  undefined,
-  error => {
-    console.error("Failed to load PLY:", error);
-  }
-);
+          const mesh = new THREE.Points(geometry, material);
+          this.scene.add(mesh);
+        },
+        undefined,
+        error => {
+          console.error("Failed to load PLY:", error);
+        }
+      );
 
       this.renderer = new THREE.WebGLRenderer({
         canvas: map.getCanvas(),
@@ -122,13 +153,11 @@ loader.load(
       this.renderer.autoClear = false;
     },
     render: function (gl, args) {
-
       const rotationX = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(1, 0, 0), modelTransform.rotateX);
       const rotationY = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(0, 1, 0), modelTransform.rotateY);
       const rotationZ = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(0, 0, 1), modelTransform.rotateZ);
 
       const m = new THREE.Matrix4().fromArray(args.defaultProjectionData.mainMatrix);
-
 
       const l = new THREE.Matrix4()
         .makeTranslation(modelTransform.translateX, modelTransform.translateY, modelTransform.translateZ)
@@ -143,13 +172,82 @@ loader.load(
   };
 
   if (map.isStyleLoaded()) {
-  map.addLayer(customLayer);
-} else {
-  map.on('style.load', () => map.addLayer(customLayer));
+    map.addLayer(customLayer);
+    addMeasuringHandlers();
+  } else {
+    map.on('style.load', () => {
+      map.addLayer(customLayer);
+      addMeasuringHandlers();
+    });
+  }
 }
 
+// ---- Measuring Tool: map click handler ----
+function addMeasuringHandlers() {
+  // Remove previous handlers (avoid duplicates on re-init)
+  map.getCanvas().removeEventListener('click', measureMapClickHandler);
+  map.getCanvas().addEventListener('click', measureMapClickHandler);
+  resetMeasure();
 }
 
+function measureMapClickHandler(e) {
+  if (!modelAsMercatorCoordinate) return;
+  const rect = map.getCanvas().getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  const lngLat = map.unproject([x, y]);
+  const merc = maplibregl.MercatorCoordinate.fromLngLat(
+    [lngLat.lng, lngLat.lat], 0
+  );
+  measurePoints.push(merc);
+
+  if (measurePoints.length === 2 && sceneRef) {
+    // Remove previous line if exists
+    if (measureLine) {
+      sceneRef.remove(measureLine);
+      measureLine.geometry.dispose();
+      measureLine.material.dispose();
+    }
+    // Calculate line and distance in meters
+    const scale = modelAsMercatorCoordinate.meterInMercatorCoordinateUnits();
+    const p1 = new THREE.Vector3(
+      (measurePoints[0].x - modelAsMercatorCoordinate.x) / scale,
+      -(measurePoints[0].y - modelAsMercatorCoordinate.y) / scale,
+      (measurePoints[0].z - modelAsMercatorCoordinate.z) / scale
+    );
+    const p2 = new THREE.Vector3(
+      (measurePoints[1].x - modelAsMercatorCoordinate.x) / scale,
+      -(measurePoints[1].y - modelAsMercatorCoordinate.y) / scale,
+      (measurePoints[1].z - modelAsMercatorCoordinate.z) / scale
+    );
+    const lineGeom = new THREE.BufferGeometry().setFromPoints([p1, p2]);
+    const lineMat = new THREE.LineBasicMaterial({ color: 0xff0000, linewidth: 4 });
+    measureLine = new THREE.Line(lineGeom, lineMat);
+    sceneRef.add(measureLine);
+
+    // Haversine for real earth distance
+    function haversine(lng1, lat1, lng2, lat2) {
+      const R = 6371000;
+      const toRad = d => d * Math.PI / 180;
+      const dLat = toRad(lat2 - lat1);
+      const dLng = toRad(lng2 - lng1);
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+        Math.sin(dLng / 2) * Math.sin(dLng / 2);
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+    const latlng0 = [measurePoints[0].toLngLat().lng, measurePoints[0].toLngLat().lat];
+    const latlng1 = [measurePoints[1].toLngLat().lng, measurePoints[1].toLngLat().lat];
+    const distanceMeters = haversine(
+      latlng0[0], latlng0[1],
+      latlng1[0], latlng1[1]
+    );
+    showLabel(`Distance: ${distanceMeters.toFixed(2)} meters`);
+    resetBtn.style.display = 'block';
+  }
+}
+// ---------------------------------------------
 
 // Update displayed media and map
 function updateView(shipKey) {
