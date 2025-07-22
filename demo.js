@@ -92,7 +92,7 @@ function initMap(shipData, shipKey) {
       this.scene.add(ambientLight);
 
       const loader = new PLYLoader();
-const plyPath = media/${shipKey}.ply;
+const plyPath = `media/${shipKey}.ply`;
 
 console.log("Loading PLY:", plyPath);
 
@@ -153,17 +153,17 @@ loader.load(
 
 // Update displayed media and map
 function updateView(shipKey) {
-  const imgFile = ${shipKey}.jpg;
-  const segmentedFile = ${shipKey}_segmented.png;
-  const videoFile = ${shipKey}.mp4;
+  const imgFile = `${shipKey}.jpg`;
+  const segmentedFile = `${shipKey}_segmented.png`;
+  const videoFile = `${shipKey}.mp4`;
 
-  img.src = media/${imgFile};
-  segmented.src = media/${segmentedFile};
-  video.src = media/${videoFile};
+  img.src = `media/${imgFile}`;
+  segmented.src = `media/${segmentedFile}`;
+  video.src = `media/${videoFile}`;
 
   const shipData = annotations[imgFile];
   if (!shipData) {
-    alert(No annotation found for ${imgFile});
+    alert(`No annotation found for ${imgFile}`);
     return;
   }
 
