@@ -38,5 +38,7 @@ All input images, segmentation masks, 3D reconstructions, and metadata are preco
   author={Carrillo-Perez, Borja and Sattler, Felix and Rodriguez, Angel Bueno and Stephan, Maurice and Barnes, Sarah},
   booktitle={SPIE Optics + Photonics},
   year={2025},
-  organization={SPIE}
+  organization={SPIE},
+  doi={10.1117/12.3063784},
+  url={https://doi.org/10.1117/12.3063784}
 }
